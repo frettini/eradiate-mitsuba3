@@ -563,6 +563,9 @@ public:
         return m_components.size();
     }
 
+    /// Flags for all components combined.
+    uint32_t filter(Mask /*active*/ = true) const { return m_filter; }
+
     /**
      * \brief Evaluate the diffuse reflectance
      *
@@ -627,6 +630,9 @@ protected:
     /// Flags for each component of this BSDF.
     std::vector<uint32_t> m_components;
 
+    /// Filter type for this BSDF
+    uint32_t m_filter;
+
     MI_TRAVERSE_CB(Object)
 };
 
@@ -688,6 +694,7 @@ DRJIT_CALL_TEMPLATE_BEGIN(mitsuba::BSDF)
     DRJIT_CALL_METHOD(sh_frame)
     DRJIT_CALL_METHOD(eval_hdrf)
     DRJIT_CALL_GETTER(flags)
+    DRJIT_CALL_GETTER(filter)
     auto needs_differentials() const { return has_flag(flags(), mitsuba::BSDFFlags::NeedsDifferentials); }
 DRJIT_CALL_END()
 

@@ -111,6 +111,7 @@ public:
     }
 
     using BSDF::m_flags;
+    using BSDF::m_filter;
     using BSDF::m_components;
 
     DR_TRAMPOLINE_TRAVERSE_CB(BSDF);
@@ -183,6 +184,7 @@ template <typename Ptr, typename Cls> void bind_bsdf_generic(Cls &cls) {
             },
             "name"_a, "si"_a, "active"_a = true, D(BSDF, eval_attribute_3))
         .def("flags", [](Ptr bsdf) { return bsdf->flags(); }, D(BSDF, flags))
+        .def("filter", [](Ptr bsdf) { return bsdf->filter(); }, D(BSDF, filter))
         .def("needs_differentials",
              [](Ptr bsdf) { return bsdf->needs_differentials(); },
              D(BSDF, needs_differentials));
@@ -199,6 +201,7 @@ MI_PY_EXPORT(BSDF) {
             "index"_a, "active"_a = true, D(BSDF, flags, 2))
         .def_method(BSDF, component_count, "active"_a = true)
         .def_field(PyBSDF, m_flags, D(BSDF, m_flags))
+        .def_field(PyBSDF, m_filter, D(BSDF, m_filter))
         .def_field(PyBSDF, m_components, D(BSDF, m_components))
         .def("__repr__", &BSDF::to_string, D(BSDF, to_string));
 

@@ -1143,6 +1143,8 @@ Parameter ``sample2``:
     A uniformly distributed sample on :math:`[0,1]^2`. It is used to
     generate the sampled direction.)doc";
 
+static const char *__doc_mitsuba_BSDF_filter = R"doc(Flags for all components combined.)doc";
+
 static const char *__doc_mitsuba_BSDF_flags = R"doc(Flags for all components combined.)doc";
 
 static const char *__doc_mitsuba_BSDF_flags_2 = R"doc(Flags for a specific component of this BSDF.)doc";
@@ -1154,6 +1156,8 @@ Parameter ``name``:
     Name of the attribute)doc";
 
 static const char *__doc_mitsuba_BSDF_m_components = R"doc(Flags for each component of this BSDF.)doc";
+
+static const char *__doc_mitsuba_BSDF_m_filter = R"doc(Filter type for this BSDF)doc";
 
 static const char *__doc_mitsuba_BSDF_m_flags = R"doc(Combined flags for all components of this BSDF.)doc";
 
@@ -4350,6 +4354,12 @@ domain)doc";
 static const char *__doc_mitsuba_FilterBoundaryCondition_Repeat = R"doc(Assume that the input repeats in a periodic fashion)doc";
 
 static const char *__doc_mitsuba_FilterBoundaryCondition_Zero = R"doc(Assume that the input function is zero outside of the defined domain)doc";
+
+static const char *__doc_mitsuba_FilterType = R"doc()doc";
+
+static const char *__doc_mitsuba_FilterType_Ignore = R"doc()doc";
+
+static const char *__doc_mitsuba_FilterType_Include = R"doc()doc";
 
 static const char *__doc_mitsuba_Formatter =
 R"doc(Abstract interface for converting log information into a human-
@@ -13126,6 +13136,10 @@ static const char *__doc_mitsuba_has_flag_7 = R"doc()doc";
 
 static const char *__doc_mitsuba_has_flag_8 = R"doc()doc";
 
+static const char *__doc_mitsuba_has_flag_9 = R"doc()doc";
+
+static const char *__doc_mitsuba_has_flag_10 = R"doc()doc";
+
 static const char *__doc_mitsuba_hash = R"doc()doc";
 
 static const char *__doc_mitsuba_hash_2 = R"doc()doc";
@@ -13568,6 +13582,10 @@ static const char *__doc_mitsuba_operator_add_8 = R"doc()doc";
 
 static const char *__doc_mitsuba_operator_add_9 = R"doc()doc";
 
+static const char *__doc_mitsuba_operator_add_10 = R"doc()doc";
+
+static const char *__doc_mitsuba_operator_add_11 = R"doc()doc";
+
 static const char *__doc_mitsuba_operator_band = R"doc()doc";
 
 static const char *__doc_mitsuba_operator_band_2 = R"doc()doc";
@@ -13600,6 +13618,14 @@ static const char *__doc_mitsuba_operator_band_15 = R"doc()doc";
 
 static const char *__doc_mitsuba_operator_band_16 = R"doc()doc";
 
+static const char *__doc_mitsuba_operator_band_17 = R"doc()doc";
+
+static const char *__doc_mitsuba_operator_band_18 = R"doc()doc";
+
+static const char *__doc_mitsuba_operator_band_19 = R"doc()doc";
+
+static const char *__doc_mitsuba_operator_band_20 = R"doc()doc";
+
 static const char *__doc_mitsuba_operator_bnot = R"doc()doc";
 
 static const char *__doc_mitsuba_operator_bnot_2 = R"doc()doc";
@@ -13615,6 +13641,10 @@ static const char *__doc_mitsuba_operator_bnot_6 = R"doc()doc";
 static const char *__doc_mitsuba_operator_bnot_7 = R"doc()doc";
 
 static const char *__doc_mitsuba_operator_bnot_8 = R"doc()doc";
+
+static const char *__doc_mitsuba_operator_bnot_9 = R"doc()doc";
+
+static const char *__doc_mitsuba_operator_bnot_10 = R"doc()doc";
 
 static const char *__doc_mitsuba_operator_bor = R"doc()doc";
 
@@ -13647,6 +13677,14 @@ static const char *__doc_mitsuba_operator_bor_14 = R"doc()doc";
 static const char *__doc_mitsuba_operator_bor_15 = R"doc()doc";
 
 static const char *__doc_mitsuba_operator_bor_16 = R"doc()doc";
+
+static const char *__doc_mitsuba_operator_bor_17 = R"doc()doc";
+
+static const char *__doc_mitsuba_operator_bor_18 = R"doc()doc";
+
+static const char *__doc_mitsuba_operator_bor_19 = R"doc()doc";
+
+static const char *__doc_mitsuba_operator_bor_20 = R"doc()doc";
 
 static const char *__doc_mitsuba_operator_lshift = R"doc(Print a string representation of the bounding box)doc";
 
