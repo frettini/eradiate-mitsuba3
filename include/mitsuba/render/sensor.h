@@ -129,6 +129,16 @@ public:
      */
     ref<const Sampler> sampler() const { return m_sampler.get(); }
 
+    virtual void accumulate(
+        const Ray3f &ray,
+        const SurfaceInteraction3f &si,
+        Spectrum emitted,
+        Spectrum throughput,
+        ScalarFloat sample_scale,
+        Mask filter = true,
+        Mask active = true
+    );
+
     //! @}
     // =============================================================
 
@@ -327,6 +337,7 @@ DRJIT_CALL_TEMPLATE_BEGIN(mitsuba::Sensor)
     DRJIT_CALL_METHOD(pdf_position)
     DRJIT_CALL_METHOD(eval)
     DRJIT_CALL_METHOD(sample_wavelengths)
+    DRJIT_CALL_METHOD(accumulate)
     DRJIT_CALL_GETTER(flags)
     DRJIT_CALL_GETTER(shape)
     DRJIT_CALL_GETTER(medium)
