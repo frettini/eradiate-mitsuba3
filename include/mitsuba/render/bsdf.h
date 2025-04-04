@@ -595,6 +595,20 @@ public:
         return si.sh_frame;
     }
 
+
+    /**
+     * \brief Evaluate the hemispherical directional reflectance
+     *
+     * This method returns the hemispherical directional reflectance for a given
+     * direction.
+     *
+     * \param si
+     *     A surface interaction data structure describing the underlying
+     *     surface position.
+     */
+    virtual Spectrum eval_hdrf(const SurfaceInteraction3f &si,
+        Mask active = true) const; 
+
     /// Return a human-readable representation of the BSDF
     std::string to_string() const override = 0;
 
@@ -672,6 +686,7 @@ DRJIT_CALL_TEMPLATE_BEGIN(mitsuba::BSDF)
     DRJIT_CALL_METHOD(eval_attribute_1)
     DRJIT_CALL_METHOD(eval_attribute_3)
     DRJIT_CALL_METHOD(sh_frame)
+    DRJIT_CALL_METHOD(eval_hdrf)
     DRJIT_CALL_GETTER(flags)
     auto needs_differentials() const { return has_flag(flags(), mitsuba::BSDFFlags::NeedsDifferentials); }
 DRJIT_CALL_END()
