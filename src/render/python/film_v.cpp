@@ -49,6 +49,10 @@ public:
         NB_OVERRIDE_PURE(write, path);
     }
 
+    void write_tensor(const Float values, const UInt32 idx, Mask active) override {
+        PYBIND11_OVERRIDE_PURE(void, Film, write_tensor, values, idx, active);
+    }
+
     void schedule_storage() override {
         NB_OVERRIDE_PURE(schedule_storage);
     }
@@ -97,6 +101,7 @@ MI_PY_EXPORT(Film) {
         .def_method(Film, develop, "raw"_a = false)
         .def_method(Film, bitmap, "raw"_a = false)
         .def_method(Film, write, "path"_a)
+        .def_method(Film, write_tensor, "values"_a, "idx"_a, "active"_a)
         .def_method(Film, sample_border)
         .def_method(Film, base_channels_count)
         // Make sure to return a copy of those members as they might also be
