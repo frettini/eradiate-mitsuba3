@@ -41,7 +41,7 @@ into the outgoing hemisphere. This material is two-sided.
 template <typename Float, typename Spectrum>
 class BilambertianBSDF final : public BSDF<Float, Spectrum> {
 public:
-    MI_IMPORT_BASE(BSDF, m_flags, m_components)
+    MI_IMPORT_BASE(BSDF, m_flags, m_components, m_filter)
     MI_IMPORT_TYPES(Texture)
 
     BilambertianBSDF(const Properties &props) : Base(props) {
@@ -204,6 +204,11 @@ public:
         return result;
     }
 
+    Spectrum eval_hdrf(const SurfaceInteraction3f &si,
+        Mask active) const override {
+        return m_reflectance->eval(si, active) + m_transmittance->eval(si, active);
+    }
+    
     void traverse(TraversalCallback *cb) override {
         cb->put("reflectance", m_reflectance.get(), ParamFlags::Differentiable);
         cb->put("transmittance", m_transmittance.get(), ParamFlags::Differentiable);

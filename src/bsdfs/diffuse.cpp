@@ -94,6 +94,7 @@ public:
     }
 
     void traverse(TraversalCallback *cb) override {
+        Base::traverse(cb);
         cb->put("reflectance", m_reflectance, ParamFlags::Differentiable);
     }
 
