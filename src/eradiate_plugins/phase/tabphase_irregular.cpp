@@ -120,6 +120,7 @@ public:
     }
 
     void traverse(TraversalCallback *cb) override {
+        Base::traverse(cb);
         cb->put("values", m_distr.pdf(), ParamFlags::NonDifferentiable);
         cb->put("nodes", m_distr.nodes(), ParamFlags::NonDifferentiable);
     }

@@ -396,6 +396,7 @@ public:
     }
 
     void traverse(TraversalCallback *cb) override {
+        Base::traverse(cb);
         cb->put("m11", m_m11.pdf(), ParamFlags::NonDifferentiable);
         cb->put("m12", m_mvec.data(0), ParamFlags::NonDifferentiable);
         cb->put("m22", m_mvec.data(1), ParamFlags::NonDifferentiable);
