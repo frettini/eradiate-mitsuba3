@@ -70,6 +70,7 @@ public:
     }
 
     void traverse(TraversalCallback *cb) override {
+        Base::traverse(cb);
         cb->put("transmittance", m_transmittance, ParamFlags::Differentiable);
     }
 

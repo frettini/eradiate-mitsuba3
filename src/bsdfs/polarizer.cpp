@@ -91,6 +91,7 @@ public:
     }
 
     void traverse(TraversalCallback *cb) override {
+        Base::traverse(cb);
         cb->put("theta", m_theta, ParamFlags::Differentiable | ParamFlags::Discontinuous);
         cb->put("transmittance", m_transmittance, ParamFlags::Differentiable);
     }

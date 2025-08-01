@@ -210,6 +210,7 @@ public:
     }
 
     void traverse(TraversalCallback *cb) override {
+        Base::traverse(cb);
         if (m_specular_reflectance)
             cb->put("specular_reflectance", m_specular_reflectance, ParamFlags::Differentiable);
 

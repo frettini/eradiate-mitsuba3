@@ -202,6 +202,7 @@ public:
     }
 
     void traverse(TraversalCallback *cb) override {
+        Base::traverse(cb);
         cb->put("longitudinal_roughness", m_longitudinal_roughness, ParamFlags::Differentiable | ParamFlags::Discontinuous);
         cb->put("azimuthal_roughness",    m_azimuthal_roughness,    ParamFlags::Differentiable | ParamFlags::Discontinuous);
         cb->put("scale_tilt",             m_alpha,                  ParamFlags::Differentiable | ParamFlags::Discontinuous);

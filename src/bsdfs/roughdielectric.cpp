@@ -220,6 +220,7 @@ public:
     }
 
     void traverse(TraversalCallback *cb) override {
+        Base::traverse(cb);
         cb->put("eta", m_eta, ParamFlags::Differentiable | ParamFlags::Discontinuous);
 
         if (!has_flag(m_flags, BSDFFlags::Anisotropic))

@@ -182,6 +182,7 @@ public:
     }
 
     void traverse(TraversalCallback *cb) override {
+        Base::traverse(cb);
         cb->put("eta", m_eta, ParamFlags::NonDifferentiable);
         cb->put("diffuse_reflectance", m_diffuse_reflectance, ParamFlags::Differentiable);
 

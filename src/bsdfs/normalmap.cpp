@@ -123,6 +123,7 @@ public:
     }
 
     void traverse(TraversalCallback *cb) override {
+        Base::traverse(cb);
         cb->put("nested_bsdf", m_nested_bsdf, ParamFlags::Differentiable);
         cb->put("normalmap",   m_normalmap,   ParamFlags::Differentiable | ParamFlags::Discontinuous);
     }

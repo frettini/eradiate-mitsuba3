@@ -114,6 +114,7 @@ public:
     }
 
     void traverse(TraversalCallback *cb) override {
+        Base::traverse(cb);
         cb->put("opacity", m_opacity, ParamFlags::Differentiable | ParamFlags::Discontinuous);
         cb->put("nested_bsdf", m_nested_bsdf, ParamFlags::Differentiable);
     }

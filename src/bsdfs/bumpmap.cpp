@@ -129,6 +129,7 @@ public:
     }
 
     void traverse(TraversalCallback *cb) override {
+        Base::traverse(cb);
         cb->put("nested_bsdf",    m_nested_bsdf,    ParamFlags::Differentiable | ParamFlags::Discontinuous);
         cb->put("nested_texture", m_nested_texture, ParamFlags::Differentiable | ParamFlags::Discontinuous);
         cb->put("scale",          m_scale,          ParamFlags::NonDifferentiable);

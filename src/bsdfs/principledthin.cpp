@@ -219,6 +219,7 @@ public:
     }
 
     void traverse(TraversalCallback *cb) override {
+        Base::traverse(cb);
         cb->put("eta",                                   m_eta_thin,         ParamFlags::Differentiable | ParamFlags::Discontinuous);
         cb->put("roughness",                             m_roughness,        ParamFlags::Differentiable | ParamFlags::Discontinuous);
         cb->put("diff_trans",                            m_diff_trans,       ParamFlags::Differentiable);

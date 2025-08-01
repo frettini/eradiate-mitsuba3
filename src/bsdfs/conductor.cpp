@@ -239,6 +239,7 @@ public:
     }
 
     void traverse(TraversalCallback *cb) override {
+        Base::traverse(cb);
         cb->put("eta",                  m_eta,                  ParamFlags::Differentiable | ParamFlags::Discontinuous);
         cb->put("k",                    m_k,                    ParamFlags::Differentiable | ParamFlags::Discontinuous);
         cb->put("specular_reflectance", m_specular_reflectance, ParamFlags::Differentiable);
