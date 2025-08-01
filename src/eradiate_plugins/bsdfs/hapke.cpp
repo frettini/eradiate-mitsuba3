@@ -82,6 +82,7 @@ public:
     }
 
     void traverse(TraversalCallback *cb) override {
+        Base::traverse(cb);
         cb->put("w", m_w.get(), ParamFlags::Differentiable);
         cb->put("b", m_b.get(), ParamFlags::Differentiable);
         cb->put("c", m_c.get(), ParamFlags::Differentiable);

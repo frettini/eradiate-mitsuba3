@@ -80,6 +80,7 @@ public:
     }
 
     void traverse(TraversalCallback *cb) override {
+        Base::traverse(cb);
         cb->put("indices", m_indices.get(), ParamFlags::NonDifferentiable);
         for (size_t i = 0; i < m_nested_bsdf.size(); ++i) {
             cb->put("bsdf_" + std::to_string(i), m_nested_bsdf[i].get(),

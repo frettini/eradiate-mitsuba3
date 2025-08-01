@@ -302,6 +302,7 @@ public:
     }
 
     void traverse(TraversalCallback *cb) override {
+        Base::traverse(cb);
         cb->put("wavelength", m_wavelength, ParamFlags::NonDifferentiable);
         cb->put("wind_speed", m_wind_speed, ParamFlags::Differentiable);
         cb->put("wind_direction", m_wind_direction, ParamFlags::Differentiable);

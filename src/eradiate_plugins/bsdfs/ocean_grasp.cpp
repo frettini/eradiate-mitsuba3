@@ -144,6 +144,7 @@ public:
     }
 
     void traverse(TraversalCallback *cb) override {
+        Base::traverse(cb);
         cb->put("wavelength", m_wavelength, ParamFlags::NonDifferentiable);
         cb->put("wind_speed", m_wind_speed.get(), ParamFlags::Differentiable);
         cb->put("eta", m_eta.get(), ParamFlags::Differentiable);

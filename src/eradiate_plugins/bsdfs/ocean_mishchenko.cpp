@@ -115,6 +115,7 @@ public:
     }
 
     void traverse(TraversalCallback *cb) override {
+        Base::traverse(cb);
         cb->put("wind_speed", m_wind_speed, ParamFlags::Differentiable);
         cb->put("eta", m_eta, ParamFlags::Differentiable);
         cb->put("k", m_k, ParamFlags::Differentiable);

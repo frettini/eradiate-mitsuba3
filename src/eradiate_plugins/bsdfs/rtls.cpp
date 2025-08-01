@@ -80,6 +80,7 @@ public:
     }
 
     void traverse(TraversalCallback *cb) override {
+        Base::traverse(cb);
         cb->put("f_iso", m_f_iso.get(), ParamFlags::Differentiable);
         cb->put("f_vol", m_f_vol.get(), ParamFlags::Differentiable);
         cb->put("f_geo", m_f_geo.get(), ParamFlags::Differentiable);
