@@ -98,6 +98,7 @@ public:
     }
 
     void traverse(TraversalCallback *cb) override {
+        Base::traverse(cb);
         cb->put("weight", m_weight, ParamFlags::Differentiable);
         cb->put("phase_0", m_nested_phase[0], ParamFlags::Differentiable);
         cb->put("phase_1", m_nested_phase[1], ParamFlags::Differentiable);

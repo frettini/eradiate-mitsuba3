@@ -75,6 +75,7 @@ public:
     }
 
     void traverse(TraversalCallback *cb) override {
+        Base::traverse(cb);
         cb->put("values", m_distr.pdf(), ParamFlags::Differentiable | ParamFlags::Discontinuous);
     }
 
