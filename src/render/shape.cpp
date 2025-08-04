@@ -57,6 +57,8 @@ MI_VARIANT Shape<Float, Spectrum>::Shape(const Properties &props)
     }
 
     m_silhouette_sampling_weight = props.get<ScalarFloat>("silhouette_sampling_weight", 1.0f);
+
+    m_filter = props.get<uint32_t>("filter", 0);
 }
 
 MI_VARIANT Shape<Float, Spectrum>::~Shape() { }
@@ -381,7 +383,8 @@ MI_VARIANT void Shape<Float, Spectrum>::traverse(TraversalCallback *cb) {
         cb->put("exterior_medium", m_exterior_medium, ParamFlags::Differentiable);
 
     cb->put("silhouette_sampling_weight", m_silhouette_sampling_weight, ParamFlags::NonDifferentiable);
-
+    cb->put_parameter("filter", m_filter, +ParamFlags::NonDifferentiable);
+    
     for (auto it = m_texture_attributes.begin(); it != m_texture_attributes.end(); ++it)
         cb->put(it.key(), it.value(), ParamFlags::Differentiable);
 }

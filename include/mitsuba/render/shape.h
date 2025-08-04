@@ -884,6 +884,8 @@ public:
     /// Does this shape have flipped normals?
     virtual bool has_flipped_normals() const;
 
+    uint32_t filter(Mask /*active*/ = true) const { return m_filter; }
+
     /**
      * \brief Describe this shape's geometry to the ray-tracing backends.
      *
@@ -954,6 +956,7 @@ protected:
     ref<Medium> m_interior_medium;
     ref<Medium> m_exterior_medium;
     ShapeType m_shape_type = ShapeType::Invalid;
+    uint32_t m_filter;
 
     uint32_t m_discontinuity_types = (uint32_t) DiscontinuityFlags::Empty;
     /// Sampling weight (proportional to scene)
@@ -1096,6 +1099,7 @@ DRJIT_CALL_TEMPLATE_BEGIN(mitsuba::Shape)
     DRJIT_CALL_GETTER(silhouette_sampling_weight)
     DRJIT_CALL_GETTER(has_flipped_normals)
     DRJIT_CALL_GETTER(shape_type)
+    DRJIT_CALL_GETTER(filter)
     auto is_emitter() const { return emitter() != nullptr; }
     auto is_sensor() const { return sensor() != nullptr; }
     auto is_mesh() const { return (shape_type() & +mitsuba::ShapeType::Mesh) != 0; }
