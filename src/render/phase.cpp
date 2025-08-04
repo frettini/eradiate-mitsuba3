@@ -4,11 +4,12 @@
 
 NAMESPACE_BEGIN(mitsuba)
 
-// #ERADIATE_CHANGE_BEGIN: DDIS
+// #ERADIATE_CHANGE_BEGIN: DDIS && Filter
 MI_VARIANT PhaseFunction<Float, Spectrum>::PhaseFunction(const Properties &props)
     : JitObject<PhaseFunction>(props.id()),
       m_flags(+PhaseFunctionFlags::Empty),
       m_node_count(256) {
+    m_filter = props.get<uint32_t>("filter", 0);
 }
 
 MI_VARIANT typename PhaseFunction<Float, Spectrum>::FloatStorage
@@ -42,6 +43,13 @@ PhaseFunction<Float, Spectrum>::accumulate_envelope(const FloatStorage &nodes,
         }
     }
 }
+
+MI_VARIANT 
+void PhaseFunction<Float, Spectrum>::traverse(TraversalCallback *callback) {
+    callback->put("filter", m_filter, +ParamFlags::NonDifferentiable );
+}
+
+MI_VARIANT PhaseFunction<Float, Spectrum>::~PhaseFunction() {}
 // #ERADIATE_CHANGE_END
 
 MI_INSTANTIATE_CLASS(PhaseFunction)

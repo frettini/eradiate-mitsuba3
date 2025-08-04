@@ -198,6 +198,9 @@ public:
         return m_components.size();
     }
 
+    /// Flags for all components combined.
+    uint32_t filter(Mask /*active*/ = true) const { return m_filter; }
+
     /// Return a human-readable representation of the phase function
     std::string to_string() const override = 0;
 
@@ -261,10 +264,13 @@ public:
     //! @}
     // -----------------------------------------------------------------------
 
+    void traverse(TraversalCallback *callback) override;
+    
     MI_DECLARE_PLUGIN_BASE_CLASS(PhaseFunction)
 
 protected:
     PhaseFunction(const Properties &props);
+    virtual ~PhaseFunction();
 
 protected:
     /// Type of phase function (e.g. anisotropic)
@@ -272,9 +278,12 @@ protected:
 
     /// Flags for each component of this phase function.
     std::vector<uint32_t> m_components;
-    // #ERADIATE_CHANGE_BEGIN: DDIS
+    // #ERADIATE_CHANGE_BEGIN: DDIS && filter
     /// Number of nodes to regularly discretize the cos theta dimension in \ref accumulate_envelope
     size_t m_node_count;
+
+    /// Filter type for this Phase function
+    uint32_t m_filter;
     // #ERADIATE_CHANGE_END
 };
 
@@ -309,9 +318,10 @@ DRJIT_CALL_TEMPLATE_BEGIN(mitsuba::PhaseFunction)
     DRJIT_CALL_METHOD(max_projected_area)
     DRJIT_CALL_GETTER(flags)
     DRJIT_CALL_GETTER(component_count)
-// #ERADIATE_CHANGE_BEGIN: DDIS
+// #ERADIATE_CHANGE_BEGIN: DDIS && Filter
     DRJIT_CALL_METHOD(get_envelope_nodes)
     DRJIT_CALL_METHOD(accumulate_envelope)
+    DRJIT_CALL_GETTER(filter)
 // #ERADIATE_CHANGE_END
 DRJIT_CALL_END()
 

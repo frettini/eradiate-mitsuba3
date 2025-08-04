@@ -69,6 +69,7 @@ public:
     }
 
     using PhaseFunction::m_flags;
+    using PhaseFunction::m_filter;
     using PhaseFunction::m_components;
 
     DR_TRAMPOLINE_TRAVERSE_CB(PhaseFunction)
@@ -102,6 +103,8 @@ template <typename Ptr, typename Cls> void bind_phase_generic(Cls &cls) {
             D(PhaseFunction, max_projected_area))
        .def("flags", [](Ptr ptr, Mask active) { return ptr->flags(active); },
             "active"_a = true, D(PhaseFunction, flags))
+       .def("filter", [](Ptr ptr, Mask active) { return ptr->filter(active); },
+            "active"_a = true, D(PhaseFunction, filter))
        .def("component_count", [](Ptr ptr, Mask active) { return ptr->component_count(active); },
             "active"_a = true, D(PhaseFunction, component_count));
 // #ERADIATE_CHANGE_BEGIN: DDIS
@@ -147,6 +150,7 @@ MI_PY_EXPORT(PhaseFunction) {
             .def("flags", nb::overload_cast<size_t, Mask>(&PhaseFunction::flags, nb::const_),
                  "index"_a, "active"_a = true, D(PhaseFunction, flags, 2))
             .def_field(PyPhaseFunction, m_flags, D(PhaseFunction, m_flags))
+            .def_field(PyPhaseFunction, m_filter, D(PhaseFunction, m_filter))
             .def("__repr__", &PhaseFunction::to_string);
 
     drjit::bind_traverse(phase);
