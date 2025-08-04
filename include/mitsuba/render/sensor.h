@@ -141,6 +141,8 @@ public:
         Mask active = true
     );
 
+    uint32_t sensor_filter(Mask /*active*/ = true) const { return m_sensor_filter; }
+
     //! @}
     // =============================================================
 
@@ -171,6 +173,8 @@ protected:
     ScalarFloat m_shutter_open_time;
     ref<const Texture> m_srf;
     bool m_alpha;
+    
+    uint32_t m_sensor_filter;
 
     MI_TRAVERSE_CB(Base, m_film, m_sampler, m_srf)
 };
@@ -343,4 +347,5 @@ DRJIT_CALL_TEMPLATE_BEGIN(mitsuba::Sensor)
     DRJIT_CALL_GETTER(flags)
     DRJIT_CALL_GETTER(shape)
     DRJIT_CALL_GETTER(medium)
+    DRJIT_CALL_GETTER(sensor_filter)
 DRJIT_CALL_END()
