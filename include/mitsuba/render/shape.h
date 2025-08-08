@@ -883,7 +883,8 @@ public:
 
     /// Does this shape have flipped normals?
     virtual bool has_flipped_normals() const;
-
+    
+    /// Return the filter type.
     uint32_t filter(Mask /*active*/ = true) const { return m_filter; }
 
     /**
