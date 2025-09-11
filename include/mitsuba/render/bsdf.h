@@ -618,6 +618,8 @@ public:
     //! @}
     // -----------------------------------------------------------------------
 
+    void traverse(TraversalCallback *callback) override;
+
     MI_DECLARE_PLUGIN_BASE_CLASS(BSDF)
 
 protected:
