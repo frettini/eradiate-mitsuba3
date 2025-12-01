@@ -3,5 +3,6 @@ set(MI_PLUGIN_PREFIX "integrators")
 add_plugin(eovolpath eovolpath.cpp)
 add_plugin(stokes_moment stokes_moment.cpp)
 add_plugin(paccumulator paccumulator.cpp)
+# add_plugin(paccumulator_debug paccumulator_debug.cpp)
 
 set(MI_PLUGIN_TARGETS "${MI_PLUGIN_TARGETS}" PARENT_SCOPE)
