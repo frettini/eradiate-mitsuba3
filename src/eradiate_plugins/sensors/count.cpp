@@ -60,7 +60,6 @@ public:
                    m_needs_sample_3, m_sensor_filter)
     MI_IMPORT_TYPES(Scene, Shape)
 
-    using Matrix = dr::Matrix<Float, Transform4f::Size>;
     using Index = dr::int32_array_t<Float>;
 
     CountSensor(const Properties &props) : Base(props) {
@@ -162,6 +161,5 @@ protected:
     bool m_apply_sample_scale;
 };
 
-MI_IMPLEMENT_CLASS_VARIANT(CountSensor, Sensor)
-MI_EXPORT_PLUGIN(CountSensor, "Count Sensor")
+MI_EXPORT_PLUGIN(CountSensor)
 NAMESPACE_END(mitsuba)

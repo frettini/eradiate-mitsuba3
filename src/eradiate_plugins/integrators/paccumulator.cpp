@@ -10,6 +10,7 @@
 #include <mitsuba/render/medium.h>
 #include <mitsuba/render/phase.h>
 #include <nanothread/nanothread.h>
+#include <drjit/array_traits.h>
 
 NAMESPACE_BEGIN(mitsuba)
 
@@ -131,7 +132,7 @@ public:
 
     TensorXf render(Scene *scene,
         Sensor *sensor,
-        uint32_t seed = 0,
+        UInt32 seed = 0,
         uint32_t spp = 0,
         bool develop = true,
         bool evaluate = true) override {
@@ -190,7 +191,7 @@ public:
 
         TensorXf result;
         if constexpr (!dr::is_jit_v<Float>) {
-            size_t n_threads = Thread::thread_count();
+            size_t n_threads = (uint32_t) (pool_size() + 1);
 
             Log(Info, "Starting render job (%u, %u sample%s,%s %u thread%s)",
                 crop_size_prod, spp, spp == 1 ? "" : "s",
@@ -215,11 +216,9 @@ public:
             // Start the render timer (used for timeouts & log messages)
             m_render_timer.reset();
             Log(Info, "grain_size : %d, total_samples : %d, sample_scale: %f", grain_size, total_samples, sample_scale);
-            ThreadEnvironment env;
             dr::parallel_for(
                 dr::blocked_range<size_t>(0, total_samples, grain_size),
                 [&](const dr::blocked_range<size_t> &range) {
-                    ScopedSetThreadEnvironment set_env(env);
 
                     // Fork a non-overlapping sampler for the current worker
                     ref<Sampler> sampler = sensor->sampler()->clone();
@@ -359,6 +358,7 @@ public:
     /// Virtual destructor
     virtual ~VolumeIntegrator() {};
 
+    MI_DECLARE_CLASS(VolumeIntegrator)
     protected:
     /**
     * \brief Number of samples to compute for each pass over the image blocks.
@@ -383,10 +383,10 @@ public:
 
     bool m_film_scale;
 
-    MI_DECLARE_CLASS()
-
 };
 
+// MI_EXTERN_CLASS(VolumeIntegrator)
+// MI_INSTANTIATE_CLASS(VolumeIntegrator)
 
 
 template <typename Float, typename Spectrum>
@@ -405,9 +405,9 @@ public:
             ScalarPoint3f bbox_max = props.get<ScalarPoint3f>("pbox_max");
             m_pbox = ScalarBoundingBox3f(bbox_min, bbox_max);
             m_pbox_extents = m_pbox.extents();
-            ScalarTransform4f pbox_to_world = 
-                ScalarTransform4f::translate(m_pbox.center()) *
-                ScalarTransform4f::scale(m_pbox.extents()*0.5f);
+            ScalarAffineTransform4f pbox_to_world = 
+                ScalarAffineTransform4f::translate(m_pbox.center()) *
+                ScalarAffineTransform4f::scale(m_pbox.extents()*0.5f);
 
             // Create the null bsdf which will be references in the periodic cube.
             m_pbox_bsdf = PluginManager::instance()->create_object<BSDF>(Properties("null"));
@@ -415,25 +415,25 @@ public:
             // Create the box shape that fits the periodic box.
             auto props = Properties("cube");
             props.set_id("periodic_box");
-            props.set_string("name", "periodic_box");
-            props.set_transform("to_world", pbox_to_world);
-            props.set_object("bsdf", (Object *) m_pbox_bsdf.get());
+            props.set<std::string>("name", "periodic_box");
+            props.set("to_world", pbox_to_world);
+            props.set("bsdf", (Object *) m_pbox_bsdf.get());
             m_pbox_shape = PluginManager::instance()->create_object<Shape>(props);
         }        
     }
 
     void traverse(TraversalCallback *callback) override {
         Base::traverse(callback);
-        callback->put_parameter("min_depth", m_min_depth, +ParamFlags::NonDifferentiable);
-        callback->put_parameter("max_depth", m_max_depth, +ParamFlags::NonDifferentiable);
+        callback->put("min_depth", m_min_depth, +ParamFlags::NonDifferentiable);
+        callback->put("max_depth", m_max_depth, +ParamFlags::NonDifferentiable);
     }
 
     MI_INLINE
     Float index_spectrum(const UnpolarizedSpectrum &spec, const UInt32 &idx) const {
         Float m = spec[0];
         if constexpr (is_rgb_v<Spectrum>) { // Handle RGB rendering
-            dr::masked(m, dr::eq(idx, 1u)) = spec[1];
-            dr::masked(m, dr::eq(idx, 2u)) = spec[2];
+            dr::masked(m, idx == 1u) = spec[1];
+            dr::masked(m, idx == 2u) = spec[2];
         } else {
             DRJIT_MARK_USED(idx);
         }
@@ -446,7 +446,7 @@ public:
         auto [ray, throughput, medium] = prepare_ray(scene, sensor, sampler);
 
         Float throughput_max = dr::max(unpolarized_spectrum(throughput));
-        Mask active = dr::neq(throughput_max, 0.f);
+        Mask active = throughput_max != 0.f;
 
         trace_light_ray(ray, scene, sensor, sampler, medium, throughput,
                         sample_scale, active);
@@ -504,13 +504,13 @@ public:
         MediumPtr medium = initial_medium;
         UInt32 channel = 0;
         if (is_rgb_v<Spectrum>) {
-            uint32_t n_channels = (uint32_t) dr::array_size_v<Spectrum>;
+            uint32_t n_channels = (uint32_t) dr::size_v<Spectrum>;
             channel = (UInt32) dr::minimum(sampler->next_1d(active) * n_channels, n_channels - 1);
         }
 
         // Initialize periodic bound variables
         // Mask pbounds_valid = dr::neq(m_periodic_box, nullptr);
-        Mask pbounds_valid = m_pbox.valid() && dr::neq(m_pbox_shape.get(), nullptr);
+        Mask pbounds_valid = m_pbox.valid() && (m_pbox_shape.get() != nullptr);
         UInt32 max_periodic_iterations = 100; // TODO: include with depth?
         UInt32 periodic_count = 0;
 
@@ -529,23 +529,55 @@ public:
         if (m_max_depth >= 0)
             active &= depth < m_max_depth;
 
-        /* Set up a Dr.Jit loop (optimizes away to a normal loop in scalar mode,
-           generates wavefront or megakernel renderer based on configuration).
-           Register everything that changes as part of the loop here */
-        dr::Loop<Mask> loop("Particle Tracer Integrator", active, depth, ray,
-                            throughput, eta, sampler);
+        struct LoopState {
+            Mask active;
+            UInt32 depth;
+            UInt32 periodic_count;
+            Ray3f ray;
+            Spectrum throughput;
+            Sensor* sensor;
+            MediumPtr medium;
+            Float eta;
+            ScalarFloat sample_scale;
+            Sampler* sampler;
 
-        loop.set_max_iterations(m_max_depth);
-        
-        // Incrementally build light path using BSDF sampling.
-        while (loop(active)) {
+            DRJIT_STRUCT(LoopState, active, depth, periodic_count, ray, \ 
+                throughput, sensor, medium, eta, sample_scale, sampler)
+        } ls = {
+            active,
+            depth,
+            periodic_count,
+            ray,
+            throughput,
+            sensor,
+            medium,
+            eta,
+            sample_scale,
+            sampler
+        };
+
+        dr::tie(ls) = dr::while_loop(dr::make_tuple(ls),
+            [](const LoopState& ls) { return ls.active; },
+            [this, scene, channel, pbounds_valid, sensor_filter, max_periodic_iterations](LoopState& ls) {
+
+            Mask& active = ls.active;
+            UInt32& depth = ls.depth;
+            UInt32& periodic_count = ls.periodic_count;
+            Ray3f& ray = ls.ray;
+            Spectrum& throughput = ls.throughput;
+            Sensor* sensor = ls.sensor;
+            MediumPtr& medium = ls.medium;
+            Float& eta = ls.eta;
+            ScalarFloat& sample_scale = ls.sample_scale;
+            Sampler* sampler = ls.sampler;
+
             Log(Debug, "====== LOOP depth: %d ======", depth);
             Log(Debug, "ray.o: %f", ray.o);
             Log(Debug, "ray.d: %f", ray.d);
             Mask escaped_pbound = false, escaped_medium = false;
             Mask act_null_scatter = false, act_medium_scatter = false;
 
-            Mask active_medium = active && dr::neq(medium, nullptr);
+            Mask active_medium = active && (medium != nullptr);
             Mask active_surface = active && !active_medium;
             Log(Debug, "active_medium: %f, active_surface: %f", active_medium, active_surface);
 
@@ -562,7 +594,7 @@ public:
             SurfaceInteraction3f si = 
             scene->ray_intersect(ray, 
                 /* ray_flags = */ +RayFlags::All, 
-                /* coherent = */ dr::eq(depth, 0u),
+                /* coherent = */ depth == 0u,
                 active);
             
             if(dr::any_or<true>(pbounds_valid && active)) {
@@ -638,7 +670,7 @@ public:
 
             // early exit
             if (dr::none_or<false>(active))
-                break;
+                return;
 
             /* ----------------- Scattering Event Selection ----------------- */
             if (dr::any_or<true>(active_medium)) {
@@ -741,7 +773,7 @@ public:
                 
             /* ------------------------- Ray Update ------------------------- */
                 // Spawn ray for next iteration
-                escaped_pbound = pbounds_valid && active_surface && dr::eq(m_pbox_shape.get(), si.shape);
+                escaped_pbound = pbounds_valid && active_surface && m_pbox_shape.get() == si.shape;
                 
                 // In the case of not escaping pbound, update using BSDF sample
                 dr::masked(ray, !escaped_pbound) = si.spawn_ray(si.to_world(bs.wo));
@@ -776,18 +808,19 @@ public:
             // Russian Roulette
             Mask use_rr = depth > m_rr_depth && !escaped_pbound;
             if (dr::any_or<true>(use_rr)) {
-                Float q = dr::minimum(dr::max(unpolarized_spectrum(throughput)) * dr::sqr(eta), 0.95f);
+                Float q = dr::minimum(dr::max(unpolarized_spectrum(throughput)) * dr::square(eta), 0.95f);
                 dr::masked(active, use_rr) &= sampler->next_1d(active) < q;
                 dr::masked(throughput, use_rr) *= dr::rcp(q);
             }
             
-            active &= dr::any(dr::neq(unpolarized_spectrum(throughput), 0.f));
+            active &= dr::any(unpolarized_spectrum(throughput) != 0.f);
             active &= (active_surface | active_medium);
             active &= depth < (uint32_t) m_max_depth;
             Log(Debug, "throughput: %d, use_rr: %d, active: %d", throughput, use_rr, active);
-        }
+        },
+        "Accumulator Integrator");
 
-        return { throughput, 1.f };
+        return { ls.throughput, 1.f };
     }
 
     //! @}
@@ -805,16 +838,15 @@ public:
                         );
     }
 
+    MI_DECLARE_CLASS(ParticleAccumulatorIntegrator)
 protected:
     ref<BSDF> m_pbox_bsdf;
     ref<Shape> m_pbox_shape;
     ScalarBoundingBox3f m_pbox;
     ScalarVector3f m_pbox_extents;
 
-    MI_DECLARE_CLASS()
+    MI_TRAVERSE_CB(Base, m_min_depth, m_max_depth)
 };
 
-MI_IMPLEMENT_CLASS_VARIANT(VolumeIntegrator, Integrator);
-MI_IMPLEMENT_CLASS_VARIANT(ParticleAccumulatorIntegrator, VolumeIntegrator);
-MI_EXPORT_PLUGIN(ParticleAccumulatorIntegrator, "Particle Tracer integrator");
+MI_EXPORT_PLUGIN(ParticleAccumulatorIntegrator);
 NAMESPACE_END(mitsuba)

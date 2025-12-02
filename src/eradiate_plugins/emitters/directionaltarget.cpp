@@ -80,18 +80,18 @@ public:
             ScalarVector3f direction(dr::normalize(props.get<ScalarVector3f>("direction")));
             auto [up, unused] = coordinate_system(direction);
 
-            m_to_world = ScalarTransform4f::look_at(0.0f, ScalarPoint3f(direction), up);
+            m_to_world = ScalarAffineTransform4f::look_at(0.0f, ScalarPoint3f(direction), up);
             dr::make_opaque(m_to_world);
         }
 
         // Target properties.
-        auto obj = props.object("target");
+        auto obj = props.get<ref<Object>>("target");
         m_target_shape = dynamic_cast<Shape *>(obj.get());
         if (!m_target_shape)
             Throw("Invalid parameter target, must be a Point3f or a Shape.");
 
         // Irradiance properties
-        m_irradiance = props.texture_d65<Texture>("irradiance", 1.f);
+        m_irradiance = props.get_emissive_texture<Texture>("irradiance", 1.f);
 
         if (m_irradiance->is_spatially_varying())
             Throw("Expected a non-spatially varying irradiance spectra!");
@@ -99,13 +99,12 @@ public:
         m_needs_sample_3 = false;
 
         m_flags      = EmitterFlags::Infinite | EmitterFlags::DeltaDirection;
-        dr::set_attr(this, "flags", m_flags);
     }
 
     void traverse(TraversalCallback *callback) override {
         Base::traverse(callback);
-        callback->put_object("irradiance",   m_irradiance.get(), +ParamFlags::Differentiable);
-        callback->put_parameter("to_world", *m_to_world.ptr(),   +ParamFlags::NonDifferentiable);
+        callback->put("irradiance",   m_irradiance.get(), +ParamFlags::Differentiable);
+        callback->put("to_world", *m_to_world.ptr(),   +ParamFlags::NonDifferentiable);
     }
 
     void set_scene(const Scene *scene) override {
@@ -133,7 +132,7 @@ public:
 
         // 1. "Sample" directional component (fixed, no actual sampling required)
         const auto trafo = m_to_world.value();
-        Vector3f d_global = trafo.transform_affine(Vector3f{ 0.f, 0.f, 1.f });
+        Vector3f d_global = trafo * Vector3f{ 0.f, 0.f, 1.f };
 
         // 2. Use area-based sampling of shape
         PositionSample3f ps =
@@ -212,7 +211,7 @@ public:
         return oss.str();
     }
 
-    MI_DECLARE_CLASS()
+    MI_DECLARE_CLASS(DirectionalTargetEmitter)
 
 protected:
     ref<Texture> m_irradiance;
@@ -220,6 +219,5 @@ protected:
     ScalarBoundingSphere3f m_bsphere;
 };
 
-MI_IMPLEMENT_CLASS_VARIANT(DirectionalTargetEmitter, Emitter)
-MI_EXPORT_PLUGIN(DirectionalTargetEmitter, "Distant directional target emitter")
+MI_EXPORT_PLUGIN(DirectionalTargetEmitter)
 NAMESPACE_END(mitsuba)

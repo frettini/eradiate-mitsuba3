@@ -71,7 +71,7 @@ public:
 
         if (props.has_property("sizes")) {
             std::vector<std::string> sizes_str =
-            string::tokenize(props.string("sizes"), " ,");
+            string::tokenize(props.get<std::string>("sizes"), " ,");
 
             if( sizes_str.size() != m_ndims) 
                 Throw("'sizes' parameter has %u elements but %u 'ndims' were specified", sizes_str.size(), m_ndims);
@@ -113,8 +113,8 @@ public:
     }
 
     void traverse(TraversalCallback *callback) override {
-        callback->put_parameter("data", m_data, +ParamFlags::Differentiable);
         Base::traverse(callback);
+        callback->put("data", m_data, +ParamFlags::Differentiable);
     }
 
     size_t base_channels_count() const override {
@@ -199,7 +199,7 @@ public:
         return oss.str();
     }
 
-    MI_DECLARE_CLASS()
+    MI_DECLARE_CLASS(TensorFilm)
 protected:
     size_t m_ndims;
     std::vector<ScalarUInt32> m_sizes;
@@ -208,8 +208,9 @@ protected:
     ScalarUInt32 m_n_channels;
 
     std::mutex m_mutex;
+
+    MI_TRAVERSE_CB(Base, m_data)
 };
 
-MI_IMPLEMENT_CLASS_VARIANT(TensorFilm, Film)
-MI_EXPORT_PLUGIN(TensorFilm, "Tensor Film")
+MI_EXPORT_PLUGIN(TensorFilm)
 NAMESPACE_END(mitsuba)

@@ -82,7 +82,7 @@ public:
     }
 
     void traverse(TraversalCallback *callback) override {
-        callback->put_parameter("data", m_data, +ParamFlags::Differentiable);
+        callback->put("data", m_data, +ParamFlags::Differentiable);
         Base::traverse(callback);
     }
 
@@ -169,14 +169,15 @@ public:
         return oss.str();
     }
 
-    MI_DECLARE_CLASS()
+    MI_DECLARE_CLASS(VolFilm)
 protected:
     ScalarVector3u m_res;
     TensorXf m_data;
     ScalarUInt32 m_n_channels;
     std::mutex m_mutex;
+
+    MI_TRAVERSE_CB(Base, m_data)
 };
 
-MI_IMPLEMENT_CLASS_VARIANT(VolFilm, Film)
-MI_EXPORT_PLUGIN(VolFilm, "Volumetric Film")
+MI_EXPORT_PLUGIN(VolFilm)
 NAMESPACE_END(mitsuba)

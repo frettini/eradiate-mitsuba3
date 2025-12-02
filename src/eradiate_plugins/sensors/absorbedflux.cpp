@@ -61,7 +61,6 @@ public:
                    m_needs_sample_3, m_sensor_filter)
     MI_IMPORT_TYPES(Scene, Shape, BSDF, BSDFPtr)
 
-    using Matrix = dr::Matrix<Float, Transform4f::Size>;
     using Index = dr::int32_array_t<Float>;
 
     AbsorbedFluxSensor(const Properties &props) : Base(props) {
@@ -171,6 +170,5 @@ protected:
     bool m_apply_sample_scale;
 };
 
-MI_IMPLEMENT_CLASS_VARIANT(AbsorbedFluxSensor, Sensor)
-MI_EXPORT_PLUGIN(AbsorbedFluxSensor, "Absorbed Flux Sensor")
+MI_EXPORT_PLUGIN(AbsorbedFluxSensor)
 NAMESPACE_END(mitsuba)

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <drjit/vcall.h>
 #include <mitsuba/core/fwd.h>
 #include <mitsuba/render/bsdf.h>
 #include <mitsuba/render/shape.h>
@@ -87,7 +86,7 @@ dr::mask_t<Float> bsdf_filter(const SurfaceInteraction<Float, Spectrum> &si,
 
     if (dr::any_or<true>(include_filter)) {
         BSDFPtr bsdf = si.bsdf();
-        pass &= dr::eq(bsdf->filter(), +FilterType::Include);
+        pass &= bsdf->filter() == +FilterType::Include;
         pass &= !has_flag(bsdf->flags(), BSDFFlags::Null);
         valid = pass && include_filter;
     }
@@ -120,7 +119,7 @@ dr::mask_t<Float> shape_filter(const SurfaceInteraction<Float, Spectrum> &si,
 
     if (dr::any_or<true>(include_filter)) {
         ShapePtr shape = si.shape;
-        pass &= dr::eq(shape->filter(), +FilterType::Include);
+        pass &= shape->filter() == +FilterType::Include;
         valid = pass && include_filter;
     }
 
@@ -153,7 +152,7 @@ dr::mask_t<Float> phase_filter(const SurfaceInteraction<Float, Spectrum> &si,
 
     if (dr::any_or<true>(include_filter)) {
         PhaseFunctionPtr phase = mei.medium->phase_function();
-        pass &= dr::eq(phase->filter(), +FilterType::Include);
+        pass &= phase->filter() == +FilterType::Include;
         valid = pass && include_filter;
     }
 

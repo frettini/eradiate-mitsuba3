@@ -102,7 +102,7 @@ public:
             ScalarVector3f direction(dr::normalize(props.get<ScalarVector3f>("direction")));
             auto [up, unused] = coordinate_system(direction);
 
-            m_to_world = ScalarTransform4f::look_at(0.0f, ScalarPoint3f(direction), up);
+            m_to_world = ScalarAffineTransform4f::look_at(0.0f, ScalarPoint3f(direction), up);
             dr::make_opaque(m_to_world);
         }
 
@@ -112,7 +112,7 @@ public:
             m_pbox = ScalarBoundingBox3f(bbox_min, bbox_max);
             
         } else if (props.has_property("periodic_box")) {
-            auto obj = props.object("periodic_box");
+            auto obj = props.get<ref<Object>>("periodic_box");
             Shape *periodic_box = dynamic_cast<Shape *>(obj.get());
             if (periodic_box) {
                 m_pbox = periodic_box->bbox();
@@ -120,7 +120,7 @@ public:
 
         }
         // Irradiance properties
-        m_irradiance = props.texture_d65<Texture>("irradiance", 1.f);
+        m_irradiance = props.get_emissive_texture<Texture>("irradiance", 1.f);
 
         if (m_irradiance->is_spatially_varying())
             Throw("Expected a non-spatially varying irradiance spectra!");
@@ -128,13 +128,12 @@ public:
         m_needs_sample_3 = false;
 
         m_flags      = +EmitterFlags::Infinite | +EmitterFlags::DeltaDirection;
-        dr::set_attr(this, "flags", m_flags);
     }
 
     void traverse(TraversalCallback *callback) override {
         Base::traverse(callback);
-        callback->put_object("irradiance",   m_irradiance.get(), +ParamFlags::Differentiable);
-        callback->put_parameter("to_world", *m_to_world.ptr(),   +ParamFlags::NonDifferentiable);
+        callback->put("irradiance",   m_irradiance.get(), +ParamFlags::Differentiable);
+        callback->put("to_world", *m_to_world.ptr(),   +ParamFlags::NonDifferentiable);
     }
 
     Spectrum eval(const SurfaceInteraction3f & /*si*/,
@@ -150,7 +149,7 @@ public:
 
         // 1. "Sample" directional component (fixed, no actual sampling required)
         const auto trafo = m_to_world.value();
-        Vector3f d_global = trafo.transform_affine(Vector3f{ 0.f, 0.f, 1.f });
+        Vector3f d_global = trafo * Vector3f{ 0.f, 0.f, 1.f };
 
         // 2. Use area-based sampling of the bounding box to face.
         Vector3f extent = m_pbox.extents();
@@ -231,13 +230,14 @@ public:
         return oss.str();
     }
 
-    MI_DECLARE_CLASS()
+    MI_DECLARE_CLASS(DirectionalPeriodicEmitter)
 
 protected:
     ref<Texture> m_irradiance;
     ScalarBoundingBox3f m_pbox;
+
+    MI_TRAVERSE_CB(Base, m_irradiance)
 };
 
-MI_IMPLEMENT_CLASS_VARIANT(DirectionalPeriodicEmitter, Emitter)
-MI_EXPORT_PLUGIN(DirectionalPeriodicEmitter, "Directional periodic emitter")
+MI_EXPORT_PLUGIN(DirectionalPeriodicEmitter)
 NAMESPACE_END(mitsuba)

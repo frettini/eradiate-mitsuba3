@@ -212,6 +212,7 @@ public:
     }
     
     void traverse(TraversalCallback *cb) override {
+        Base::traverse(cb);
         cb->put("reflectance", m_reflectance.get(), ParamFlags::Differentiable);
         cb->put("transmittance", m_transmittance.get(), ParamFlags::Differentiable);
     }

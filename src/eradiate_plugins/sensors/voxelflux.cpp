@@ -95,7 +95,6 @@ public:
                    m_needs_sample_3, m_sensor_filter)
     MI_IMPORT_TYPES(Scene, Shape, BSDF, BSDFPtr, Film)
 
-    using Matrix = dr::Matrix<Float, Transform4f::Size>;
     using Index = dr::int32_array_t<Float>;
 
     VoxelFluxSensor(const Properties &props) : Base(props) {
@@ -125,8 +124,8 @@ public:
                                 std::to_string(1);
             // Instantiate a tensor film with corresponding size
             Properties props_film("tensorfilm");
-            props_film.set_int("ndims",6);
-            props_film.set_string("sizes", sizes);
+            props_film.set("ndims",6);
+            props_film.set("sizes", sizes);
             m_film = static_cast<Film *>(pmgr->create_object<Film>(props_film));
         }
 
@@ -137,6 +136,14 @@ public:
         m_needs_sample_3 = false;
 
         m_sensor_filter = +SensorFilterFlags::Depth;
+
+        // For shape [D, F, X, Y, Z, C] with D=2, F=3, X=(res_x+1), Y=(res_y+1), Z=(res_z+1), C=n_channels
+        // For now assume n_channels to be equal to one.
+        m_stride_z = m_film->base_channels_count();
+        m_stride_y = m_stride_z * (m_grid_res.z() + 1);
+        m_stride_x = m_stride_y * (m_grid_res.y() + 1);
+        m_stride_f = m_stride_x * (m_grid_res.x() + 1);
+        m_stride_d = m_stride_f * 3;
     }
 
     void set_scene(const Scene *scene) override {
@@ -202,8 +209,8 @@ public:
         Vector3i step_dir = dr::select(ray.d > 0, 1, -1); // Vector3f?
 
         // voxel 3d index for start and end
-        Vector3i start_voxel = dr::clamp((dr::floor((grid_start - m_bbox.min) / m_voxel_size)), -1, m_grid_res);
-        Vector3i  end_voxel = dr::clamp(((grid_end - m_bbox.min) / m_voxel_size), 0, m_grid_res - 1);
+        Vector3i start_voxel = dr::clip((dr::floor((grid_start - m_bbox.min) / m_voxel_size)), -1, m_grid_res);
+        Vector3i  end_voxel = dr::clip(((grid_end - m_bbox.min) / m_voxel_size), 0, m_grid_res - 1);
 
         // Distance along th ray to the next voxel boundary
         Vector3f next_voxel_pos = m_bbox.min + (start_voxel + step_dir) * m_voxel_size;
@@ -224,22 +231,43 @@ public:
         
         const ScalarVector3i face_index(0,1,2);
 
-        // For shape [D, F, X, Y, Z, C] with D=2, F=3, X=(res_x+1), Y=(res_y+1), Z=(res_z+1), C=n_channels
-        // For now assume n_channels to be equal to one.
-        UInt32 stride_z = m_film->base_channels_count();
-        UInt32 stride_y = stride_z * (m_grid_res.z() + 1);
-        UInt32 stride_x = stride_y * (m_grid_res.y() + 1);
-        UInt32 stride_f = stride_x * (m_grid_res.x() + 1);
-        UInt32 stride_d = stride_f * 3;
-
 
         Spectrum flux = emitted * throughput;
         flux *= m_apply_sample_scale ? sample_scale : Spectrum(1.f); 
 
-        dr::Loop<Mask> loop("DDA");
-        loop.put(active, dtmax, remaining_dist, current_voxel);
-        loop.init();
-        while (loop(dr::detach(active))) {
+        struct LoopState {
+            Mask active;
+            Float t;
+            Vector3f dtmax;
+            Float remaining_dist;
+            Vector3i current_voxel;
+
+            DRJIT_STRUCT(LoopState, active, t, dtmax, remaining_dist, current_voxel)
+        } ls = {
+            active,
+            t,
+            dtmax,
+            remaining_dist,
+            current_voxel,
+        };
+
+        dr::tie(ls) = dr::while_loop(dr::make_tuple(ls),
+            [](const LoopState& ls) { return ls.active; },
+            [this,
+             ray,
+             maxt,
+             tstep,
+             face_index,
+             step_dir,
+             flux,
+             end_voxel,
+             filter](LoopState& ls) {
+
+            Mask& active = ls.active;
+            Float& t = ls.t;
+            Vector3f& dtmax = ls.dtmax;
+            Float& remaining_dist = ls.remaining_dist;
+            Vector3i current_voxel = ls.current_voxel;
 
             Float dt = dr::minimum(dr::min(dtmax), remaining_dist);
             dr::masked(remaining_dist, active) -= dt;
@@ -260,10 +288,10 @@ public:
                 current_face[i] = dr::select(active_step && (step_dir[i] > 0), current_voxel[i] + 1, current_voxel[i]);
                 
                 UInt32 current_voxel_flat = current_face.z()
-                                       + current_face.y() * stride_y
-                                       + current_face.x() * stride_x
-                                       + f * stride_f
-                                       + d * stride_d;
+                                       + current_face.y() * m_stride_y
+                                       + current_face.x() * m_stride_x
+                                       + f * m_stride_f
+                                       + d * m_stride_d;
                 // ====== Write to film ======
                 if constexpr (!is_polarized_v<Spectrum>){
                     Float cos_theta = dr::select(active_step, dr::abs(ray.d[i]), 1.);
@@ -275,7 +303,7 @@ public:
                 }
                 
             }
-            active &= dr::any(dr::neq(end_voxel, current_voxel)) && (remaining_dist > 1e-6);
+            active &= dr::any(end_voxel != current_voxel) && (remaining_dist > 1e-6);
             
             // Update the voxel index by stepping in the axis closest to the current point.
             dtmax = dr::select(mask, tstep, dtmax - dt);
@@ -284,7 +312,8 @@ public:
             // @Ponder: I'm unsure this would have the intended effect in vectorized mode
             // since we cannot control which axis is reduced yet.
             active &= dr::all(current_voxel >= 0) && dr::all(current_voxel < m_grid_res);
-        }
+        },
+        "DDA");
     };
 
     std::string to_string() const override {
@@ -298,7 +327,7 @@ public:
         return oss.str();
     }
 
-    MI_DECLARE_CLASS()
+    MI_DECLARE_CLASS(VoxelFluxSensor)
 
 protected:
     // Sensor extent bbox
@@ -307,8 +336,13 @@ protected:
     ScalarVector3f m_voxel_size;
     bool m_surface_flux;
     bool m_apply_sample_scale;
+
+    UInt32 m_stride_z; 
+    UInt32 m_stride_y; 
+    UInt32 m_stride_x; 
+    UInt32 m_stride_f; 
+    UInt32 m_stride_d; 
 };
 
-MI_IMPLEMENT_CLASS_VARIANT(VoxelFluxSensor, Sensor)
-MI_EXPORT_PLUGIN(VoxelFluxSensor, "Absorbed Flux Sensor")
+MI_EXPORT_PLUGIN(VoxelFluxSensor)
 NAMESPACE_END(mitsuba)

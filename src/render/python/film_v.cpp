@@ -46,7 +46,7 @@ public:
     }
 
     bool is_volume_film() const override {
-        PYBIND11_OVERRIDE(bool, Film, is_volume_film);
+        NB_OVERRIDE_PURE(is_volume_film);
     }
 
     void write(const fs::path &path) const override {
@@ -54,7 +54,7 @@ public:
     }
 
     void write_tensor(const Float values, const UInt32 idx, Mask active) override {
-        PYBIND11_OVERRIDE_PURE(void, Film, write_tensor, values, idx, active);
+        NB_OVERRIDE_PURE(write_tensor, values, idx, active);
     }
 
     void schedule_storage() override {

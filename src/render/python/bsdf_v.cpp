@@ -74,7 +74,7 @@ public:
 
     Spectrum eval_hdrf(const BSDFContext &ctx, const SurfaceInteraction3f &si,
                                       Mask active) const override {
-        PYBIND11_OVERRIDE(Spectrum, BSDF, eval_hdrf, ctx, si, active);
+        NB_OVERRIDE(eval_hdrf, ctx, si, active);
     }
 
     Spectrum eval_null_transmission(const SurfaceInteraction3f &si,

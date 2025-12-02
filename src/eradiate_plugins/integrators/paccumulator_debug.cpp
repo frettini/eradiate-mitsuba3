@@ -382,7 +382,7 @@ public:
 
     bool m_film_scale;
 
-    MI_DECLARE_CLASS()
+    MI_DECLARE_CLASS(VolumeIntegrator)
 
 };
 
@@ -404,9 +404,9 @@ public:
             ScalarPoint3f bbox_max = props.get<ScalarPoint3f>("pbox_max");
             m_pbox = ScalarBoundingBox3f(bbox_min, bbox_max);
             m_pbox_extents = m_pbox.extents();
-            ScalarTransform4f pbox_to_world = 
-                ScalarTransform4f::translate(m_pbox.center()) *
-                ScalarTransform4f::scale(m_pbox.extents()*0.5f);
+            ScalarAffineTransform4f pbox_to_world = 
+                ScalarAffineTransform4f::translate(m_pbox.center()) *
+                ScalarAffineTransform4f::scale(m_pbox.extents()*0.5f);
 
             // Create the null bsdf which will be references in the periodic cube.
             m_pbox_bsdf = PluginManager::instance()->create_object<BSDF>(Properties("null"));
@@ -424,16 +424,16 @@ public:
 
     void traverse(TraversalCallback *callback) override {
         Base::traverse(callback);
-        callback->put_parameter("min_depth", m_min_depth, +ParamFlags::NonDifferentiable);
-        callback->put_parameter("max_depth", m_max_depth, +ParamFlags::NonDifferentiable);
+        callback->put("min_depth", m_min_depth, +ParamFlags::NonDifferentiable);
+        callback->put("max_depth", m_max_depth, +ParamFlags::NonDifferentiable);
     }
 
     MI_INLINE
     Float index_spectrum(const UnpolarizedSpectrum &spec, const UInt32 &idx) const {
         Float m = spec[0];
         if constexpr (is_rgb_v<Spectrum>) { // Handle RGB rendering
-            dr::masked(m, dr::eq(idx, 1u)) = spec[1];
-            dr::masked(m, dr::eq(idx, 2u)) = spec[2];
+            dr::masked(m, idx == 1u) = spec[1];
+            dr::masked(m, idx == 2u) = spec[2];
         } else {
             DRJIT_MARK_USED(idx);
         }
@@ -446,7 +446,7 @@ public:
         auto [ray, throughput, medium] = prepare_ray(scene, sensor, sampler);
 
         Float throughput_max = dr::max(unpolarized_spectrum(throughput));
-        Mask active = dr::neq(throughput_max, 0.f);
+        Mask active = throughput_max != 0.f;
 
         trace_light_ray(ray, scene, sensor, sampler, medium, throughput,
                         sample_scale, active);
@@ -509,7 +509,7 @@ public:
 
         // Initialize periodic bound variables
         // Mask pbounds_valid = dr::neq(m_periodic_box, nullptr);
-        Mask pbounds_valid = m_pbox.valid() && dr::neq(m_pbox_shape.get(), nullptr);
+        Mask pbounds_valid = m_pbox.valid() && (m_pbox_shape.get()!= nullptr);
         UInt32 max_periodic_iterations = 100; // TODO: include with depth?
         UInt32 periodic_count = 0;
 
@@ -549,7 +549,7 @@ public:
             SurfaceInteraction3f si = 
             scene->ray_intersect(ray, 
                 /* ray_flags = */ +RayFlags::All, 
-                /* coherent = */ dr::eq(depth, 0u),
+                /* coherent = */ depth == 0u,
                 active);
             
             if(dr::any_or<true>(pbounds_valid && active)) {
@@ -646,7 +646,7 @@ public:
                 
             /* ------------------------- Ray Update ------------------------- */
                 // Spawn ray for next iteration
-                escaped_pbound = pbounds_valid && active_surface && dr::eq(m_pbox_shape.get(), si.shape);
+                escaped_pbound = pbounds_valid && active_surface && (m_pbox_shape.get() == si.shape);
                 
                 // In the case of not escaping pbound, update using BSDF sample
                 dr::masked(ray, !escaped_pbound) = si.spawn_ray(si.to_world(bs.wo));
@@ -675,7 +675,7 @@ public:
             }
         
             /* --------------------- Stopping criterion --------------------- */                      
-            active &= dr::any(dr::neq(unpolarized_spectrum(throughput), 0.f));
+            active &= dr::any(unpolarized_spectrum(throughput) != 0.f);
             active &= (active_surface);
             active &= depth < (uint32_t) m_max_depth;
             Log(Debug, "throughput: %d, active: %d", throughput, active);
@@ -699,16 +699,16 @@ public:
                         );
     }
 
+    MI_DECLARE_CLASS(ParticleAccumulatorDebugIntegrator)
 protected:
     ref<BSDF> m_pbox_bsdf;
     ref<Shape> m_pbox_shape;
     ScalarBoundingBox3f m_pbox;
     ScalarVector3f m_pbox_extents;
 
-    MI_DECLARE_CLASS()
+
+    MI_TRAVERSE_CB(Base, m_min_depth, m_max_depth)
 };
 
-MI_IMPLEMENT_CLASS_VARIANT(VolumeIntegrator, Integrator);
-MI_IMPLEMENT_CLASS_VARIANT(ParticleAccumulatorDebugIntegrator, VolumeIntegrator);
-MI_EXPORT_PLUGIN(ParticleAccumulatorDebugIntegrator, "Particle Tracer integrator");
+MI_EXPORT_PLUGIN(ParticleAccumulatorDebugIntegrator);
 NAMESPACE_END(mitsuba)
