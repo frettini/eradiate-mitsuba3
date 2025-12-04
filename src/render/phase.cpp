@@ -48,8 +48,6 @@ MI_VARIANT
 void PhaseFunction<Float, Spectrum>::traverse(TraversalCallback *callback) {
     callback->put("filter", m_filter, +ParamFlags::NonDifferentiable );
 }
-
-MI_VARIANT PhaseFunction<Float, Spectrum>::~PhaseFunction() {}
 // #ERADIATE_CHANGE_END
 
 MI_INSTANTIATE_CLASS(PhaseFunction)

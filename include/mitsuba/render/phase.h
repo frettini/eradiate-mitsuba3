@@ -270,7 +270,6 @@ public:
 
 protected:
     PhaseFunction(const Properties &props);
-    virtual ~PhaseFunction();
 
 protected:
     /// Type of phase function (e.g. anisotropic)
