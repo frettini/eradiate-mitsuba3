@@ -137,13 +137,13 @@ public:
 
         m_sensor_filter = +SensorFilterFlags::Depth;
 
-        // For shape [D, F, X, Y, Z, C] with D=2, F=3, X=(res_x+1), Y=(res_y+1), Z=(res_z+1), C=n_channels
-        // For now assume n_channels to be equal to one.
-        m_stride_z = m_film->base_channels_count();
-        m_stride_y = m_stride_z * (m_grid_res.z() + 1);
-        m_stride_x = m_stride_y * (m_grid_res.y() + 1);
-        m_stride_f = m_stride_x * (m_grid_res.x() + 1);
-        m_stride_d = m_stride_f * 3;
+
+        // m_stride_d = 1;
+        // m_stride_f = 1*2;
+        // m_stride_x = m_stride_f * 3;
+        // m_stride_y = m_stride_x * (m_grid_res.x() + 1);
+        // m_stride_z = m_stride_y * (m_grid_res.y() + 1);
+        // m_stride_c = m_stride_z * (m_grid_res.z() + 1);  
     }
 
     void set_scene(const Scene *scene) override {
@@ -169,6 +169,14 @@ public:
         } 
         m_voxel_size = m_bbox.extents() / ScalarVector3f(m_grid_res);
 
+        // For shape [D, F, X, Y, Z, C] with D=2, F=3, X=(res_x+1), Y=(res_y+1), Z=(res_z+1), C=n_channels
+        // For now assume n_channels to be equal to one.
+        m_stride_z = m_film->base_channels_count();
+        m_stride_y = m_stride_z * (m_grid_res.z() + 1);
+        m_stride_x = m_stride_y * (m_grid_res.y() + 1);
+        m_stride_f = m_stride_x * (m_grid_res.x() + 1);
+        m_stride_d = m_stride_f * 3;
+
     }
 
     // This sensor does not occupy any particular region of space, return an
@@ -186,7 +194,7 @@ public:
         Mask filter = true,
         Mask active = true
     ) override {
-           
+        
         // Find intersection with the bounding box of the volume grid
         Vector3f t_bmin = (m_bbox.min - ray.o) / ray.d;
         Vector3f t_bmax = (m_bbox.max - ray.o) / ray.d;
@@ -267,7 +275,7 @@ public:
             Float& t = ls.t;
             Vector3f& dtmax = ls.dtmax;
             Float& remaining_dist = ls.remaining_dist;
-            Vector3i current_voxel = ls.current_voxel;
+            Vector3i& current_voxel = ls.current_voxel;
 
             Float dt = dr::minimum(dr::min(dtmax), remaining_dist);
             dr::masked(remaining_dist, active) -= dt;
@@ -277,7 +285,8 @@ public:
             active &= (maxt - t) > 1e-6;
 
             auto mask = dr::abs(dtmax - dt) <= 1e-6;
-
+            Log(Debug, "hired| dt: %f, t: %f, flux: %f ", dt, t, flux);
+            Log(Debug, "drool| current_voxel: %f ", current_voxel);
             //----------------------------------------
             // Retrieve the face and direction indices used to access the film
             for( size_t i = 0 ; i < 3; ++i) {
@@ -286,14 +295,20 @@ public:
                 UInt32 d = dr::maximum(dr::select(active_step , step_dir[i], 0),0);
                 Vector3i current_face = current_voxel;
                 current_face[i] = dr::select(active_step && (step_dir[i] > 0), current_voxel[i] + 1, current_voxel[i]);
-                
+                Log(Debug, "rules| current_face: %f, f: %f, d: %f ", current_face, f, d);
                 UInt32 current_voxel_flat = current_face.z()
                                        + current_face.y() * m_stride_y
                                        + current_face.x() * m_stride_x
                                        + f * m_stride_f
                                        + d * m_stride_d;
+                // UInt32 current_voxel_flat = current_face.z() * m_stride_z
+                //                        + current_face.y() * m_stride_y
+                //                        + current_face.x() * m_stride_x
+                //                        + f * m_stride_f
+                //                        + d * m_stride_d;
                 // ====== Write to film ======
                 if constexpr (!is_polarized_v<Spectrum>){
+                    Log(Debug, "groom| current_voxel_flat: %f, active_step: %f ", current_voxel_flat, active_step);
                     Float cos_theta = dr::select(active_step, dr::abs(ray.d[i]), 1.);
                     m_film->write_tensor(
                         dr::select(m_surface_flux, flux[0]*cos_theta, flux[0]), 
@@ -309,6 +324,7 @@ public:
             dtmax = dr::select(mask, tstep, dtmax - dt);
             Vector3i voxel_update = dr::select(mask, step_dir, 0);
             dr::masked(current_voxel, active) += voxel_update;
+            Log(Debug, "beard| voxel_update: %f, current_voxel: %f, active: %f ", voxel_update, current_voxel, active);
             // @Ponder: I'm unsure this would have the intended effect in vectorized mode
             // since we cannot control which axis is reduced yet.
             active &= dr::all(current_voxel >= 0) && dr::all(current_voxel < m_grid_res);
@@ -337,6 +353,7 @@ protected:
     bool m_surface_flux;
     bool m_apply_sample_scale;
 
+    UInt32 m_stride_c;
     UInt32 m_stride_z; 
     UInt32 m_stride_y; 
     UInt32 m_stride_x; 
