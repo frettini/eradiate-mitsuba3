@@ -973,7 +973,7 @@ static const char *__doc_mitsuba_BSDFSample3_sampled_type = R"doc(Stores the com
 
 static const char *__doc_mitsuba_BSDFSample3_wo = R"doc(Normalized outgoing direction in local coordinates)doc";
 
-static const char *__doc_mitsuba_BSDF_BSDF = R"doc(//! @})doc";
+static const char *__doc_mitsuba_BSDF_BSDF = R"doc()doc";
 
 static const char *__doc_mitsuba_BSDF_class_name = R"doc()doc";
 
@@ -1062,6 +1062,16 @@ direction. For some materials, an exact value can be computed
 inexpensively. When this is not possible, the value is approximated by
 evaluating the BSDF for a normal outgoing direction and returning this
 value multiplied by pi. This is the default behaviour of this method.
+
+Parameter ``si``:
+    A surface interaction data structure describing the underlying
+    surface position.)doc";
+
+static const char *__doc_mitsuba_BSDF_eval_hdrf =
+R"doc(Evaluate the hemispherical directional reflectance
+
+This method returns the hemispherical directional reflectance for a
+given direction.
 
 Parameter ``si``:
     A surface interaction data structure describing the underlying
@@ -1246,6 +1256,8 @@ Returns:
     interaction shading frame.)doc";
 
 static const char *__doc_mitsuba_BSDF_to_string = R"doc(Return a human-readable representation of the BSDF)doc";
+
+static const char *__doc_mitsuba_BSDF_traverse = R"doc(//! @})doc";
 
 static const char *__doc_mitsuba_BSDF_traverse_1_cb_ro = R"doc()doc";
 
@@ -4215,9 +4227,15 @@ static const char *__doc_mitsuba_Film_crop_offset = R"doc(Return the offset of t
 
 static const char *__doc_mitsuba_Film_crop_size = R"doc(Return the size of the crop window)doc";
 
+static const char *__doc_mitsuba_Film_crop_size_2 = R"doc(Return the size of the crop window on a given axis)doc";
+
+static const char *__doc_mitsuba_Film_crop_size_product = R"doc(Return the product of the resolution of the crop window)doc";
+
 static const char *__doc_mitsuba_Film_develop = R"doc(Return a image buffer object storing the developed image)doc";
 
 static const char *__doc_mitsuba_Film_flags = R"doc(Flags for all properties combined.)doc";
+
+static const char *__doc_mitsuba_Film_is_volume_film = R"doc(Return whether this is a volume film (uses tensors instead of bitmaps))doc";
 
 static const char *__doc_mitsuba_Film_m_crop_offset = R"doc()doc";
 
@@ -4317,6 +4335,12 @@ static const char *__doc_mitsuba_Film_size =
 R"doc(Ignoring the crop window, return the resolution of the underlying
 sensor)doc";
 
+static const char *__doc_mitsuba_Film_size_2 = R"doc(Ignoring the crop window, return the resolution of a given axis.)doc";
+
+static const char *__doc_mitsuba_Film_size_product =
+R"doc(Ignoring the crop window, return the product of the resolution of the
+sensor)doc";
+
 static const char *__doc_mitsuba_Film_to_string = R"doc(//! @})doc";
 
 static const char *__doc_mitsuba_Film_traverse = R"doc()doc";
@@ -4334,6 +4358,8 @@ static const char *__doc_mitsuba_Film_type = R"doc()doc";
 static const char *__doc_mitsuba_Film_variant_name = R"doc()doc";
 
 static const char *__doc_mitsuba_Film_write = R"doc(Write the developed contents of the film to a file on disk)doc";
+
+static const char *__doc_mitsuba_Film_write_tensor = R"doc()doc";
 
 static const char *__doc_mitsuba_FilterBoundaryCondition =
 R"doc(When resampling data to a different resolution using
@@ -4355,7 +4381,9 @@ static const char *__doc_mitsuba_FilterBoundaryCondition_Repeat = R"doc(Assume t
 
 static const char *__doc_mitsuba_FilterBoundaryCondition_Zero = R"doc(Assume that the input function is zero outside of the defined domain)doc";
 
-static const char *__doc_mitsuba_FilterType = R"doc()doc";
+static const char *__doc_mitsuba_FilterType =
+R"doc(This enum is used to specify whether a feature contributes to the path
+interaction or not.)doc";
 
 static const char *__doc_mitsuba_FilterType_Ignore = R"doc()doc";
 
@@ -7213,7 +7241,7 @@ static const char *__doc_mitsuba_PhaseFunctionFlags_Isotropic = R"doc()doc";
 
 static const char *__doc_mitsuba_PhaseFunctionFlags_Microflake = R"doc()doc";
 
-static const char *__doc_mitsuba_PhaseFunction_PhaseFunction = R"doc(//! @})doc";
+static const char *__doc_mitsuba_PhaseFunction_PhaseFunction = R"doc()doc";
 
 static const char *__doc_mitsuba_PhaseFunction_accumulate_envelope =
 R"doc(Evaluate the phase function at the given cos_theta nodes and
@@ -7272,6 +7300,8 @@ Returns:
     The value and the sampling PDF of the phase function in direction
     wo)doc";
 
+static const char *__doc_mitsuba_PhaseFunction_filter = R"doc(Flags for all components combined.)doc";
+
 static const char *__doc_mitsuba_PhaseFunction_flags = R"doc(Flags for this phase function.)doc";
 
 static const char *__doc_mitsuba_PhaseFunction_flags_2 = R"doc(Flags for a specific component of this phase function.)doc";
@@ -7297,6 +7327,8 @@ Returns:
 static const char *__doc_mitsuba_PhaseFunction_get_flags = R"doc(Return type of phase function)doc";
 
 static const char *__doc_mitsuba_PhaseFunction_m_components = R"doc(Flags for each component of this phase function.)doc";
+
+static const char *__doc_mitsuba_PhaseFunction_m_filter = R"doc(Filter type for this Phase function)doc";
 
 static const char *__doc_mitsuba_PhaseFunction_m_flags = R"doc(Type of phase function (e.g. anisotropic))doc";
 
@@ -7349,6 +7381,8 @@ Returns:
 static const char *__doc_mitsuba_PhaseFunction_set_flags = R"doc(Set type of phase function)doc";
 
 static const char *__doc_mitsuba_PhaseFunction_to_string = R"doc(Return a human-readable representation of the phase function)doc";
+
+static const char *__doc_mitsuba_PhaseFunction_traverse = R"doc(//! @})doc";
 
 static const char *__doc_mitsuba_PhaseFunction_type = R"doc()doc";
 
@@ -9718,8 +9752,59 @@ static const char *__doc_mitsuba_Sensor_8 = R"doc()doc";
 static const char *__doc_mitsuba_Sensor_9 = R"doc()doc";
 
 static const char *__doc_mitsuba_Sensor_10 = R"doc()doc";
+static const char *__doc_mitsuba_SensorFilterFlags =
+R"doc(This list of flags is used to control which filters are used for a
+given sensor.)doc";
+
+static const char *__doc_mitsuba_SensorFilterFlags_All = R"doc()doc";
+
+static const char *__doc_mitsuba_SensorFilterFlags_BSDF = R"doc()doc";
+
+static const char *__doc_mitsuba_SensorFilterFlags_Depth = R"doc()doc";
+
+static const char *__doc_mitsuba_SensorFilterFlags_Exclusive = R"doc()doc";
+
+static const char *__doc_mitsuba_SensorFilterFlags_None = R"doc()doc";
+
+static const char *__doc_mitsuba_SensorFilterFlags_Phase = R"doc()doc";
+
+static const char *__doc_mitsuba_SensorFilterFlags_Shape = R"doc()doc";
+
+static const char *__doc_mitsuba_SensorFilterFlags_Surface = R"doc()doc";
 
 static const char *__doc_mitsuba_Sensor_Sensor = R"doc(This is both a class and the base of various Mitsuba plugins)doc";
+
+static const char *__doc_mitsuba_Sensor_accumulate =
+R"doc(Accumulate emitted and throughput values to the film given the
+integrator current state.
+
+Parameter ``ray``:
+    Current ray traversing the scene.
+
+Parameter ``si``:
+    Surface interaction. Note that it is not necessarily valid.
+
+Parameter ``mei``:
+    Medium interaction. Note that it is not necessarily valid.
+
+Parameter ``tmax``:
+    Maximum ray distance. This is equivalent to min(si.t, mei.t).
+
+Parameter ``emitted``:
+    The radiance emitted by the source.
+
+Parameter ``throughput``:
+    The throughput carried by the sample.
+
+Parameter ``sample_scale``:
+    Factor that accounts for the number of samples taken.
+
+Parameter ``filter``:
+    Indicates whether this sample passes the filters and should be
+    accumulated. Note, sensors can define sensor filter flags to
+    determine which filter affects it.
+
+Parameter ``active``:)doc";
 
 static const char *__doc_mitsuba_Sensor_class_name = R"doc()doc";
 
@@ -9734,6 +9819,8 @@ static const char *__doc_mitsuba_Sensor_m_film = R"doc()doc";
 static const char *__doc_mitsuba_Sensor_m_resolution = R"doc()doc";
 
 static const char *__doc_mitsuba_Sensor_m_sampler = R"doc()doc";
+
+static const char *__doc_mitsuba_Sensor_m_sensor_filter = R"doc()doc";
 
 static const char *__doc_mitsuba_Sensor_m_shutter_open = R"doc()doc";
 
@@ -9819,6 +9906,8 @@ This is the *root* sampler, which will later be cloned a number of
 times to provide each participating worker thread with its own
 instance (see Scene::sampler()). Therefore, this sampler should never
 be used for anything except creating clones.)doc";
+
+static const char *__doc_mitsuba_Sensor_sensor_filter = R"doc()doc";
 
 static const char *__doc_mitsuba_Sensor_shutter_open = R"doc(Return the time value of the shutter opening event)doc";
 
@@ -10308,6 +10397,8 @@ static const char *__doc_mitsuba_Shape_exterior_medium = R"doc(Return the medium
 
 static const char *__doc_mitsuba_Shape_exterior_medium_2 = R"doc()doc";
 
+static const char *__doc_mitsuba_Shape_filter = R"doc(Return the filter type.)doc";
+
 static const char *__doc_mitsuba_Shape_get_children_string = R"doc()doc";
 
 static const char *__doc_mitsuba_Shape_has_attribute =
@@ -10362,6 +10453,8 @@ static const char *__doc_mitsuba_Shape_m_discontinuity_types = R"doc()doc";
 static const char *__doc_mitsuba_Shape_m_emitter = R"doc()doc";
 
 static const char *__doc_mitsuba_Shape_m_exterior_medium = R"doc()doc";
+
+static const char *__doc_mitsuba_Shape_m_filter = R"doc()doc";
 
 static const char *__doc_mitsuba_Shape_m_initialized = R"doc(True if the shape has called initialize() at least once)doc";
 
@@ -12530,6 +12623,18 @@ if this is required by the BSDF (e.g. for texture filtering).
 
 Implementation in 'bsdf.h')doc";
 
+static const char *__doc_mitsuba_bsdf_filter =
+R"doc(BSDF filter Test that the interaction is a surface interaction and
+that the bsdf at interaction has a filter type equal to Include.)doc";
+
+static const char *__doc_mitsuba_build_gas =
+R"doc(Build OptiX geometry acceleration structures (GAS) for a given list of
+shapes.
+
+Two different GAS will be created for the meshes and the custom
+shapes. Optix handles to those GAS will be stored in an
+OptixAccelData.)doc";
+
 static const char *__doc_mitsuba_cie1931_xyz =
 R"doc(Evaluate the CIE 1931 XYZ color matching functions given a wavelength
 in nanometers)doc";
@@ -12578,6 +12683,10 @@ Apart from the obvious usecase as a depolarizing Mueller matrix (e.g.
 for a Lambertian diffuse material), this is also currently used in
 many BSDFs and emitters where it is not clear how they should interact
 with polarization.)doc";
+
+static const char *__doc_mitsuba_depth_filter =
+R"doc(Depth filter Tests that the current depth is within the specific
+minimum and maximum depth.)doc";
 
 static const char *__doc_mitsuba_detail_CIE1932Tables =
 R"doc(Struct carrying color space tables with fits for cie1931_xyz and
@@ -13140,6 +13249,8 @@ static const char *__doc_mitsuba_has_flag_9 = R"doc()doc";
 
 static const char *__doc_mitsuba_has_flag_10 = R"doc()doc";
 
+static const char *__doc_mitsuba_has_flag_11 = R"doc()doc";
+
 static const char *__doc_mitsuba_hash = R"doc()doc";
 
 static const char *__doc_mitsuba_hash_2 = R"doc()doc";
@@ -13586,6 +13697,8 @@ static const char *__doc_mitsuba_operator_add_10 = R"doc()doc";
 
 static const char *__doc_mitsuba_operator_add_11 = R"doc()doc";
 
+static const char *__doc_mitsuba_operator_add_12 = R"doc()doc";
+
 static const char *__doc_mitsuba_operator_band = R"doc()doc";
 
 static const char *__doc_mitsuba_operator_band_2 = R"doc()doc";
@@ -13626,6 +13739,10 @@ static const char *__doc_mitsuba_operator_band_19 = R"doc()doc";
 
 static const char *__doc_mitsuba_operator_band_20 = R"doc()doc";
 
+static const char *__doc_mitsuba_operator_band_21 = R"doc()doc";
+
+static const char *__doc_mitsuba_operator_band_22 = R"doc()doc";
+
 static const char *__doc_mitsuba_operator_bnot = R"doc()doc";
 
 static const char *__doc_mitsuba_operator_bnot_2 = R"doc()doc";
@@ -13645,6 +13762,8 @@ static const char *__doc_mitsuba_operator_bnot_8 = R"doc()doc";
 static const char *__doc_mitsuba_operator_bnot_9 = R"doc()doc";
 
 static const char *__doc_mitsuba_operator_bnot_10 = R"doc()doc";
+
+static const char *__doc_mitsuba_operator_bnot_11 = R"doc()doc";
 
 static const char *__doc_mitsuba_operator_bor = R"doc()doc";
 
@@ -13685,6 +13804,10 @@ static const char *__doc_mitsuba_operator_bor_18 = R"doc()doc";
 static const char *__doc_mitsuba_operator_bor_19 = R"doc()doc";
 
 static const char *__doc_mitsuba_operator_bor_20 = R"doc()doc";
+
+static const char *__doc_mitsuba_operator_bor_21 = R"doc()doc";
+
+static const char *__doc_mitsuba_operator_bor_22 = R"doc()doc";
 
 static const char *__doc_mitsuba_operator_lshift = R"doc(Print a string representation of the bounding box)doc";
 
@@ -14190,6 +14313,10 @@ static const char *__doc_mitsuba_perspective_projection =
 R"doc(Helper function to create a perspective projection transformation
 matrix)doc";
 
+static const char *__doc_mitsuba_phase_filter =
+R"doc(Phase filter Test that the interaction is a medium interaction and
+that the phase at interaction has a filter type equal to Include.)doc";
+
 static const char *__doc_mitsuba_plugin_type_name = R"doc(Get the XML tag name for an ObjectType (e.g. "scene", "bsdf"))doc";
 
 static const char *__doc_mitsuba_property_type_name = R"doc(Turn a Properties::Type enumeration value into string form)doc";
@@ -14484,6 +14611,10 @@ Returns:
     normals)doc";
 
 static const char *__doc_mitsuba_sggx_sample_2 = R"doc()doc";
+
+static const char *__doc_mitsuba_shape_filter =
+R"doc(Shape filter Test that the interaction is a surface interaction and
+that the shape at interaction has a filter type equal to Include.)doc";
 
 static const char *__doc_mitsuba_sobol_2 = R"doc(Sobol' radical inverse in base 2)doc";
 
