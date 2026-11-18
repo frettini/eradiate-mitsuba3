@@ -80,6 +80,7 @@ public:
     /// Write the developed contents of the film to a file on disk
     virtual void write(const fs::path &path) const = 0;
 
+    /// Write values directly to tensor. This needs to be threadsafe.
     virtual void write_tensor(const Float values, const UInt32 idx, Mask active);
 
     /// dr::schedule() variables that represent the internal film storage
@@ -158,6 +159,7 @@ public:
     /// Ignoring the crop window, return the resolution of the underlying sensor
     const ScalarVector2u &size() const { return m_size; }
 
+// #ERADIATE_CHANGE_BEGIN: volumetric film interface
     /// Ignoring the crop window, return the resolution of a given axis.
     virtual const ScalarUInt32 &size(ScalarUInt32 idx) const { return m_size[idx]; }
 
@@ -169,9 +171,10 @@ public:
 
     /// Return the size of the crop window on a given axis
     virtual const ScalarUInt32 &crop_size(ScalarUInt32 idx) const { return m_size[idx]; }
-    
+
     /// Return the product of the resolution of the crop window
     virtual const ScalarUInt32 crop_size_product() const;
+// #ERADIATE_CHANGE_END
 
     /// Return the offset of the crop window
     const ScalarPoint2u &crop_offset() const { return m_crop_offset; }

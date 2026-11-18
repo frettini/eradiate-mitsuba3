@@ -9,6 +9,7 @@
 #include <mitsuba/render/imageblock.h>
 
 #include <mutex>
+#include <array>
 
 NAMESPACE_BEGIN(mitsuba)
 
@@ -179,8 +180,10 @@ public:
 
     void write_tensor(const Float values, const UInt32 idx, Mask active) override {
         if constexpr (!dr::is_jit_v<Float>){
-            std::lock_guard<std::mutex> lock(m_mutex);
-            dr::scatter_reduce(ReduceOp::Add, m_data.array(), values, idx, active);
+            if (active) {
+                std::lock_guard<std::mutex> lock(m_mutexes[idx % kStripes]);
+                m_data.array()[idx] += values;
+            }
         } else {
             dr::scatter_reduce(ReduceOp::Add, m_data.array(), values, idx, active);
         }
@@ -207,7 +210,8 @@ protected:
     TensorXf m_data;
     ScalarUInt32 m_n_channels;
 
-    std::mutex m_mutex;
+    static constexpr size_t kStripes = 64;
+    mutable std::array<std::mutex, kStripes> m_mutexes;
 
     MI_TRAVERSE_CB(Base, m_data)
 };
